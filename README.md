@@ -1,127 +1,168 @@
-# Quantitative Equity Factor Model
+# Multi-Factor Equity Investment Model
 
-A multi-factor stock ranking and portfolio construction model built in Python.
-The model scores a universe of large-cap equities on four classic quantitative
-factors, combines the scores into a single composite ranking, constructs a
-long-only equal-weight portfolio from the top-ranked names, and backtests the
-result against the S&P 500.
+A quantitative equity investment framework that evaluates stocks using multiple financial factors, ranks investment opportunities, and constructs portfolios based on systematic investment signals.
 
-Companion project: [Portfolio Optimization Engine](https://github.com/henryletourneux/portfolio-optimization-engine)
-takes this model's top-ranked shortlist and solves for optimal capital
-allocation across it (min-variance, max-Sharpe, risk-parity) instead of
-equal-weighting.
+The project explores how factor-based investing can be used to identify potentially attractive equities, optimize portfolio allocations, and evaluate investment performance through historical backtesting.
 
-## Factors
+## Project Overview
 
-- **Value** — earnings yield (1/P-E) and book-to-price, z-scored and combined.
-- **Momentum** — 12-1 month cumulative return (excludes the most recent month
-  to control for short-term reversal).
-- **Quality** — return on equity, gross margin, and (inverse) debt-to-equity.
-- **Low Volatility** — trailing 6-month realized volatility, inverted so
-  lower risk scores higher.
+Traditional investment strategies often rely on individual financial metrics or subjective stock selection. This project combines multiple quantitative factors into a systematic stock-selection and portfolio-construction framework.
 
-Each factor is standardized (z-scored) across the universe before being
-combined into a composite score using configurable weights.
+The model focuses on four established equity investment factors:
 
-## Pipeline
+- **Value:** Identifies potentially undervalued stocks using valuation metrics.
+- **Momentum:** Evaluates historical price performance to identify prevailing market trends.
+- **Quality:** Assesses company fundamentals and financial strength.
+- **Low Volatility:** Identifies stocks with relatively lower historical price fluctuations.
 
-1. Pull adjusted price history and fundamental data for the universe via
-   `yfinance`.
-2. Compute the four factor scores per ticker.
-3. Combine into a composite score and rank the universe.
-4. Build an equal-weight portfolio from the top 30% of ranked names.
-5. Backtest the portfolio against the S&P 500 (`^GSPC`) and report total
-   return, annualized volatility, Sharpe ratio, and max drawdown.
+These factors are combined to generate stock rankings and evaluate portfolio performance.
 
-## Sample Results
+## Key Features
 
-Backtest over a trailing 2-year window on a 40-stock large-cap universe:
+- Multi-factor equity scoring and stock ranking.
+- Value, momentum, quality, and low-volatility factor analysis.
+- Information Coefficient (IC) analysis to evaluate factor effectiveness.
+- Portfolio performance evaluation.
+- Rolling-window portfolio analysis.
+- Equity curve generation and visualization.
+- Historical backtesting and performance measurement.
 
-| Metric | Factor Portfolio | S&P 500 |
-|---|---|---|
-| Total Return | 44.5% | 33.8% |
-| Annualized Volatility | 12.6% | 16.1% |
-| Sharpe Ratio | 1.54 | 0.99 |
-| Max Drawdown | -13.6% | -18.9% |
+## Technology Stack
 
-![Equity curve](equity_curve.png)
+| Category | Technologies |
+|---|---|
+| Programming | Python |
+| Data Analysis | Pandas, NumPy |
+| Statistical Analysis | Python statistical libraries |
+| Visualization | Matplotlib |
+| Financial Research | Quantitative factor analysis |
+| Development | PyCharm, Git, GitHub |
 
-Results are generated live from current market data and will differ on each
-run — see [Notes](#notes).
+## Project Structure
 
-## Rolling Rebalancing & Factor Information Coefficient
+```text
+equity-factor-investment-model/
+│
+├── factor_model.py
+├── plot_results.py
+├── rolling_analysis.py
+├── plot_rolling.py
+│
+├── factor_scores.csv
+├── ic_by_period.csv
+├── ic_summary.csv
+├── performance_metrics.csv
+├── equity_curve.csv
+├── rolling_equity_curve.csv
+├── rolling_holdings_log.csv
+├── rolling_performance_metrics.csv
+│
+├── equity_curve.png
+├── rolling_analysis.png
+│
+├── requirements.txt
+└── README.md
+```
 
-`rolling_analysis.py` extends the single buy-and-hold backtest above into a
-**monthly rebalanced** backtest, and directly measures each factor's
-predictive power via **Information Coefficient (IC)**: the cross-sectional
-Spearman rank correlation between a factor's score at time *t* and each
-stock's forward return to *t+1*. Momentum and Low-Volatility are recomputed
-at every rebalance date from price history available up to that date only
-(no look-ahead). Value and Quality are computed once from current
-fundamentals and held static across the window — point-in-time historical
-fundamentals aren't available from this data source, so those two legs
-carry mild look-ahead bias. See [Notes](#notes).
+## Methodology
 
-IC summary, monthly rebalancing over a trailing 4-year window (35 periods):
+### 1. Factor Construction
 
-| Factor | Mean IC | Std IC | Hit Rate | Information Ratio |
-|---|---|---|---|---|
-| Momentum | +0.058 | 0.261 | 57.1% | 0.222 |
-| Quality | +0.010 | 0.217 | 57.1% | 0.047 |
-| Composite | -0.013 | 0.215 | 40.0% | -0.062 |
-| Low Volatility | -0.055 | 0.298 | 31.4% | -0.185 |
-| Value | -0.069 | 0.216 | 40.0% | -0.318 |
+The investment universe is evaluated using four equity factors: value, momentum, quality, and low volatility.
 
-Momentum is the only factor with a consistently positive, positive-IR
-signal over this window; Value and Low-Volatility actually carried
-*negative* predictive power, which drags the composite's IC negative even
-though two of its four inputs are informative. That's a real, unflattering
-result, not a cherry-picked one — see below.
+Individual factor signals are combined to produce composite stock scores and rankings.
 
-Rolling backtest vs. buy-and-hold benchmark over the same 4-year window:
+### 2. Stock Ranking
 
-| Metric | Rolling Factor Portfolio | S&P 500 |
-|---|---|---|
-| Total Return | 62.6% | 83.8% |
-| Annualized Volatility | 12.9% | 12.3% |
-| Sharpe Ratio | 1.36 | 1.77 |
-| Max Drawdown | -6.8% | -7.8% |
+Stocks are evaluated according to their factor scores to identify the strongest candidates under the selected investment framework.
 
-![Rolling IC and equity curve](rolling_analysis.png)
+### 3. Portfolio Backtesting
 
-**This monthly-rebalanced version underperforms both the single buy-and-hold
-backtest above and the S&P 500 over this window** — a useful, honest result:
-it shows the static backtest's outperformance was sensitive to the specific
-2-year window and holding-period choice, not a robust edge. That's exactly
-what IC analysis is for — it isolates whether a factor has real predictive
-power independent of any one lucky backtest window, and here it says the
-composite, as currently weighted, doesn't. A natural next step is
-IC-weighting the composite instead of using fixed 25% weights, which the
-static backtest was implicitly overfitting to.
+Historical portfolio performance is evaluated using the generated investment signals.
 
-## Usage
+### 4. Information Coefficient Analysis
+
+Information Coefficient analysis examines the relationship between factor rankings and subsequent stock returns to assess the predictive effectiveness of investment factors.
+
+### 5. Rolling Performance Analysis
+
+Rolling-window analysis evaluates portfolio performance across different historical periods rather than relying exclusively on one cumulative performance figure.
+
+## Installation and Execution
+
+Clone the repository:
+
+```bash
+git clone https://github.com/thedatajournal/equity-factor-investment-model.git
+```
+
+Navigate into the project:
+
+```bash
+cd equity-factor-investment-model
+```
+
+Create a virtual environment:
+
+```bash
+python -m venv .venv
+```
+
+Activate it on Windows:
+
+```bash
+.venv\Scripts\activate
+```
+
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
-python factor_model.py       # single buy-and-hold backtest, saves CSVs
-python plot_results.py       # generates equity_curve.png
-python rolling_analysis.py   # monthly rolling rebalance + IC analysis, saves CSVs
-python plot_rolling.py       # generates rolling_analysis.png
 ```
 
-## Notes
+Run the analysis scripts:
 
-- This is a research/educational backtest, not investment advice. It does not
-  account for transaction costs, slippage, taxes, or survivorship bias in the
-  universe selection.
-- Fundamental data availability varies by ticker; names missing sufficient
-  data are dropped from the ranking.
-- The rolling backtest holds Value and Quality static (current fundamentals
-  applied across the whole window) since point-in-time historical
-  fundamentals aren't available from `yfinance`. Momentum and Low-Volatility
-  are recomputed at each rebalance date with no look-ahead. This means the
-  Value/Quality legs of the rolling backtest and IC numbers are somewhat
-  optimistic versus a fully point-in-time implementation.
-- 35 monthly rebalance periods is a small sample for IC statistics — enough
-  to see directional signal, not enough to treat the numbers above as
-  precise.
+```bash
+python factor_model.py
+python plot_results.py
+python rolling_analysis.py
+python plot_rolling.py
+```
+
+## Results and Outputs
+
+The project generates several outputs for quantitative evaluation:
+
+- Factor scores and stock rankings.
+- Information Coefficient summaries.
+- Portfolio performance metrics.
+- Cumulative equity curves.
+- Rolling portfolio performance.
+- Historical holdings information.
+
+## Future Improvements
+
+The following enhancements are planned to develop the framework into a more comprehensive quantitative investment research platform:
+
+- Incorporate additional fundamental financial data.
+- Implement sector-neutral factor scoring.
+- Conduct factor Information Coefficient and stability analysis.
+- Compare results against Fama-French factor models.
+- Introduce mean-variance and risk-adjusted portfolio optimization.
+- Incorporate transaction costs and realistic trading constraints.
+- Evaluate performance against market benchmarks.
+- Implement out-of-sample testing and robustness checks.
+
+## Research Direction
+
+The long-term objective is to develop a systematic equity investment framework that integrates financial fundamentals, statistical analysis, factor research, and portfolio optimization.
+
+The project serves as a foundation for exploring quantitative equity research and systematic portfolio management.
+
+## Acknowledgements
+
+This project builds upon the original work by [henryletourneux/quant-equity-factor-model](https://github.com/henryletourneux/quant-equity-factor-model). The original implementation is acknowledged as the starting point for further development and research.
+
+## Disclaimer
+
+This project is intended for educational and quantitative research purposes only. Backtested performance does not guarantee future investment returns. Nothing in this repository constitutes financial or investment advice.
