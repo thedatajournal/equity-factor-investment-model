@@ -159,10 +159,6 @@ The long-term objective is to develop a systematic equity investment framework t
 
 The project serves as a foundation for exploring quantitative equity research and systematic portfolio management.
 
-## Acknowledgements
-
-This project builds upon the original work by [henryletourneux/quant-equity-factor-model](https://github.com/henryletourneux/quant-equity-factor-model). The original implementation is acknowledged as the starting point for further development and research.
-
 ## Disclaimer
 
 This project is intended for educational and quantitative research purposes only. Backtested performance does not guarantee future investment returns. Nothing in this repository constitutes financial or investment advice.
